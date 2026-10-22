@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>THE PRIVATE BAR — 오리지널 홈바 레시피</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: {
+              950: '#090A0F',
+              900: '#12141C',
+              800: '#1A1D26',
+              700: '#262A36',
+              600: '#3F4454',
+            },
+            amber: {
+              gold: '#D4AF37',
+              muted: '#C5A059',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Noto+Sans+KR:wght@300;400;500;600&display=swap');
+    body { font-family: 'Noto Sans KR', sans-serif; background-color: #090A0F; color: #E2E8F0; }
+    .font-cinzel { font-family: 'Cinzel', serif; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #090A0F; }
+    ::-webkit-scrollbar-thumb { background: #262A36; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #C5A059; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-amber-gold/30 selection:text-amber-gold">
+
+  <!-- Header -->
+  <header class="bg-dark-900/80 backdrop-blur-md border-b border-dark-700 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="w-10 h-10 rounded border border-amber-gold/40 flex items-center justify-center text-amber-gold font-cinzel text-lg">
+          B
+        </div>
+        <div>
+          <h1 class="font-cinzel text-lg tracking-widest text-slate-100 font-bold">PRIVATE BAR</h1>
+          <p class="text-[11px] text-slate-400 tracking-wider">CRAFT & COCKTAIL ARCHIVE</p>
+        </div>
+      </div>
+      <button onclick="openAddModal()" class="border border-amber-gold/60 hover:border-amber-gold bg-dark-800 hover:bg-dark-700 text-amber-gold text-xs tracking-wider px-4 py-2.5 rounded transition-all flex items-center gap-2">
+        <i class="fa-solid fa-plus text-[10px]"></i>
+        <span>레시피 추가</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
+    
+    <!-- Sidebar: Ingredients -->
+    <aside class="lg:col-span-4 bg-dark-900/60 border border-dark-700/60 rounded-xl p-6 h-fit sticky top-28">
+      <div class="flex items-center justify-between pb-4 border-b border-dark-700/60 mb-5">
+        <h2 class="text-sm font-semibold tracking-wider text-slate-200 uppercase flex items-center gap-2">
+          <i class="fa-solid fa-whiskey-glass text-amber-gold"></i> 보유 바틀 & 재료 관리
+        </h2>
+        <span id="selected-count" class="text-xs text-amber-gold font-mono bg-amber-gold/10 px-2.5 py-0.5 rounded border border-amber-gold/20">
+          0개
+        </span>
+      </div>
+
+      <!-- Categories -->
+      <div class="grid grid-cols-4 gap-1 bg-dark-950 p-1 rounded-lg mb-4 text-xs border border-dark-700/40 text-center">
+        <button onclick="filterIngCategory('all')" class="ing-tab py-1.5 rounded text-slate-300 transition font-medium active-tab bg-dark-700 text-amber-gold">전체</button>
+        <button onclick="filterIngCategory('whiskey')" class="ing-tab py-1.5 rounded text-slate-400 hover:text-white transition">위스키</button>
+        <button onclick="filterIngCategory('base')" class="ing-tab py-1.5 rounded text-slate-400 hover:text-white transition">기타기주</button>
+        <button onclick="filterIngCategory('liqueur')" class="ing-tab py-1.5 rounded text-slate-400 hover:text-white transition">부재료</button>
+      </div>
+
+      <div id="ingredient-list" class="space-y-1.5 max-h-[440px] overflow-y-auto pr-1">
+        <!-- JS Injection -->
+      </div>
+
+      <div class="mt-5 pt-4 border-t border-dark-700/60 flex gap-2">
+        <button onclick="clearIngredients()" class="flex-1 py-2 text-xs text-slate-400 hover:text-white bg-dark-800 hover:bg-dark-700 rounded transition border border-dark-700">전체 해제</button>
+        <button onclick="selectAllIngredients()" class="flex-1 py-2 text-xs text-amber-gold bg-dark-800 hover:bg-dark-700 rounded transition border border-amber-gold/30">전체 선택</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <section class="lg:col-span-8 space-y-6">
+      <div class="bg-dark-900/60 border border-dark-700/60 rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div class="relative w-full sm:w-72">
+          <i class="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+          <input type="text" id="search-input" oninput="renderRecipes()" placeholder="칵테일 또는 위스키 이름 검색..." 
+                 class="w-full bg-dark-950 border border-dark-700 rounded-lg pl-10 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-gold transition">
+        </div>
+
+        <div class="flex items-center gap-1.5 bg-dark-950 p-1 rounded-lg border border-dark-700/60 w-full sm:w-auto">
+          <button id="filter-all-btn" onclick="setMatchFilter('all')" class="flex-1 sm:flex-none text-xs px-3 py-1.5 rounded transition font-medium bg-amber-gold text-dark-950 font-semibold">전체 보기</button>
+          <button id="filter-possible-btn" onclick="setMatchFilter('possible')" class="flex-1 sm:flex-none text-xs px-3 py-1.5 rounded transition text-slate-400 hover:text-slate-200">제작 가능 🍸</button>
+        </div>
+      </div>
+
+      <div id="recipe-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- JS Injection -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Detail Modal -->
+  <div id="detail-modal" class="fixed inset-0 z-50 bg-dark-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-dark-900 border border-dark-700 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative p-6 md:p-8 space-y-6">
+      <button onclick="closeDetailModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white w-8 h-8 rounded-full bg-dark-800 flex items-center justify-center transition">
+        <i class="fa-solid fa-xmark text-xs"></i>
+      </button>
+
+      <div class="flex items-start gap-4">
+        <div id="modal-icon" class="text-3xl p-3 bg-dark-950 rounded-lg border border-dark-700">🥃</div>
+        <div>
+          <div class="flex items-center gap-3">
+            <h3 id="modal-title" class="text-xl font-bold text-slate-100 font-cinzel">칵테일 이름</h3>
+            <span id="modal-abv" class="text-[11px] font-mono bg-dark-800 text-amber-gold border border-amber-gold/30 px-2 py-0.5 rounded">0%</span>
+          </div>
+          <p id="modal-eng-title" class="text-xs text-slate-400 font-mono mt-0.5">English Title</p>
+        </div>
+      </div>
+
+      <p id="modal-desc" class="text-xs text-slate-300 leading-relaxed bg-dark-950 p-4 rounded-lg border border-dark-700/60"></p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center bg-dark-950/60 p-4 rounded-lg border border-dark-700/60">
+        <div>
+          <h4 class="text-[11px] font-semibold text-amber-gold mb-2 uppercase tracking-wider">Tasting Profile</h4>
+          <div class="w-full h-44 flex items-center justify-center">
+            <canvas id="tasteChart"></canvas>
+          </div>
+        </div>
+        <div class="space-y-3">
+          <div>
+            <h4 class="text-[11px] font-semibold text-amber-gold uppercase tracking-wider mb-1">Flavor Notes</h4>
+            <p id="modal-flavor-desc" class="text-xs text-slate-300 leading-relaxed"></p>
+          </div>
+          <div class="pt-2 border-t border-dark-700/60">
+            <h4 class="text-[11px] font-semibold text-amber-gold uppercase tracking-wider mb-1">Food Pairing</h4>
+            <p id="modal-pairing" class="text-xs text-slate-300"></p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-semibold text-slate-200 mb-2 uppercase tracking-wider">Required Ingredients</h4>
+        <ul id="modal-ingredients" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs"></ul>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-semibold text-slate-200 mb-2 uppercase tracking-wider">Preparation Steps</h4>
+        <ol id="modal-steps" class="space-y-2 text-xs text-slate-300 list-decimal list-inside bg-dark-950 p-4 rounded-lg border border-dark-700/60"></ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Modal -->
+  <div id="add-modal" class="fixed inset-0 z-50 bg-dark-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-dark-900 border border-dark-700 rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 relative">
+      <button onclick="closeAddModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="text-base font-bold text-amber-gold mb-4 font-cinzel">새로운 레시피 등록</h3>
+      
+      <form id="add-recipe-form" onsubmit="handleAddRecipe(event)" class="space-y-3 text-xs">
+        <div><label class="block text-slate-400 mb-1">칵테일 이름 (한글)</label><input type="text" id="add-name" required class="w-full bg-dark-950 border border-dark-700 rounded px-3 py-2 text-slate-200 focus:border-amber-gold focus:outline-none"></div>
+        <div><label class="block text-slate-400 mb-1">칵테일 이름 (영문)</label><input type="text" id="add-eng-name" required class="w-full bg-dark-950 border border-dark-700 rounded px-3 py-2 text-slate-200 focus:border-amber-gold focus:outline-none"></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-slate-400 mb-1">도수 (%)</label><input type="number" id="add-abv" required class="w-full bg-dark-950 border border-dark-700 rounded px-3 py-2 text-slate-200"></div>
+          <div><label class="block text-slate-400 mb-1">아이콘</label><input type="text" id="add-icon" value="🥃" class="w-full bg-dark-950 border border-dark-700 rounded px-3 py-2 text-center text-slate-200"></div>
+        </div>
+        <div><label class="block text-slate-400 mb-1">설명</label><textarea id="add-desc" rows="2" class="w-full bg-dark-950 border border-dark-700 rounded px-3 py-2 text-slate-200"></textarea></div>
+        <div><label class="block text-slate-400 mb-1">필요 재료 (쉼표 구분)</label><input type="text" id="add-ing-list" required class="w-full bg-dark-950 border border-dark-700 rounded px-3 py-2 text-slate-200" placeholder="버번 위스키, 설탕 시럽, 비터스"></div>
+        <div><label class="block text-slate-400 mb-1">만드는 법 (줄바꿈 구분)</label><textarea id="add-steps" rows="3" required class="w-full bg-dark-950 border border-dark-700 rounded px-3 py-2 text-slate-200"></textarea></div>
+        <button type="submit" class="w-full bg-amber-gold text-dark-950 font-bold py-2.5 rounded transition hover:bg-amber-muted mt-2">등록 완료</button>
+      </form>
+    </div>
+  </div>
+
+  <footer class="bg-dark-950 border-t border-dark-800 py-6 text-center text-[11px] text-slate-500 font-mono">
+    © PRIVATE BAR ARCHIVE. ALL RIGHTS RESERVED.
+  </footer>
+
+  <script>
+    const defaultIngredients = [
+      { id: 'bourbon', name: '버번 위스키', category: 'whiskey' },
+      { id: 'scotch', name: '스카치 위스키', category: 'whiskey' },
+      { id: 'rye', name: '라이 위스키', category: 'whiskey' },
+      { id: 'irish', name: '아일랜드 위스키', category: 'whiskey' },
+      { id: 'gin', name: '진', category: 'base' },
+      { id: 'rum', name: '화이트 럼', category: 'base' },
+      { id: 'vodka', name: '보드카', category: 'base' },
+      { id: 'tequila', name: '데킬라', category: 'base' },
+      { id: 'kahlua', name: '깔루아', category: 'liqueur' },
+      { id: 'triple_sec', name: '트리플 섹', category: 'liqueur' },
+      { id: 'vermouth_sweet', name: '스위트 버무스', category: 'liqueur' },
+      { id: 'campari', name: '캄파리', category: 'liqueur' },
+      { id: 'angostura', name: '앙고스투라 비터스', category: 'liqueur' },
+      { id: 'tonic', name: '토닉워터', category: 'liqueur' },
+      { id: 'cola', name: '콜라', category: 'liqueur' },
+      { id: 'lime_juice', name: '라임 즙', category: 'liqueur' },
+      { id: 'lemon_juice', name: '레몬 즙', category: 'liqueur' },
+      { id: 'syrup', name: '설탕 시럽', category: 'liqueur' },
+      { id: 'soda', name: '탄산수', category: 'liqueur' },
+      { id: 'mint', name: '애플민트', category: 'liqueur' }
+    ];
+
+    const defaultRecipes = [
+      {
+        id: 'old-fashioned',
+        name: '올드 패션드',
+        engName: 'Old Fashioned',
+        abv: 32,
+        icon: '🥃',
+        desc: '위스키 본연의 깊은 오크 향과 풍미를 가장 클래식하게 즐길 수 있는 칵테일입니다.',
+        ingredients: ['버번 위스키', '설탕 시럽', '앙고스투라 비터스'],
+        measures: ['버번 위스키 60ml', '설탕 시럽 10ml', '앙고스투라 비터스 2-3드롭'],
+        taste: { sweet: 2, sour: 1, bitter: 3, strong: 5, refreshing: 2 },
+        flavorDesc: '묵직한 오크 내음과 스파이시한 비터스의 여운.',
+        pairing: '다크 초콜릿, 견과류, 스테이크',
+        steps: ['온더락 글라스에 설탕 시럽과 비터스를 넣습니다.', '큰 얼음과 버번 위스키를 부어줍니다.', '오렌지 필로 향을 더해 완성합니다.']
+      },
+      {
+        id: 'whiskey-sour',
+        name: '위스키 사워',
+        engName: 'Whiskey Sour',
+        abv: 20,
+        icon: '🍋',
+        desc: '위스키의 묵직함에 레몬의 상큼함과 달콤함이 더해져 완벽한 밸런스를 자랑합니다.',
+        ingredients: ['버번 위스키', '레몬 즙', '설탕 시럽'],
+        measures: ['버번 위스키 50ml', '레몬 즙 25ml', '설탕 시럽 20ml'],
+        taste: { sweet: 3, sour: 4, bitter: 1, strong: 3, refreshing: 4 },
+        flavorDesc: '새콤달콤함 뒤에 밀려오는 부드러운 위스키의 바디감.',
+        pairing: '치즈 플래터, 나초',
+        steps: ['쉐이커에 모든 재료와 얼음을 넣고 강하게 흔듭니다.', '얼음이 채워진 락 글라스에 따라냅니다.']
+      },
+      {
+        id: 'manhattan',
+        name: '맨해튼',
+        engName: 'Manhattan',
+        abv: 30,
+        icon: '🍸',
+        desc: '칵테일의 여왕이라 불리며, 위스키의 강렬함과 스위트 버무스의 우아함이 조화롭습니다.',
+        ingredients: ['라이 위스키', '스위트 버무스', '앙고스투라 비터스'],
+        measures: ['라이 위스키 60ml', '스위트 버무스 30ml', '비터스 2드롭'],
+        taste: { sweet: 3, sour: 1, bitter: 2, strong: 5, refreshing: 1 },
+        flavorDesc: '허브의 향긋함과 진한 위스키의 풍미가 어우러진 드라이한 여운.',
+        pairing: '올리브, 하몽, 구운 치즈',
+        steps: ['믹싱 글라스에 얼음과 재료를 넣고 충분히 저어줍니다.', '칠링된 쿠페 글라스에 따라냅니다.']
+      },
+      {
+        id: 'penicillin',
+        name: '페니실린',
+        engName: 'Penicillin',
+        abv: 24,
+        icon: '🥃',
+        desc: '스카치 위스키를 베이스로 생강과 꿀의 스파이시함이 매력적인 모던 클래식 칵테일입니다.',
+        ingredients: ['스카치 위스키', '레몬 즙', '설탕 시럽'],
+        measures: ['스카치 위스키 60ml', '레몬 즙 22ml', '꿀/설탕 시럽 15ml'],
+        taste: { sweet: 3, sour: 3, bitter: 2, strong: 4, refreshing: 3 },
+        flavorDesc: '스모키한 피트 향과 알싸한 생강·레몬의 조화.',
+        pairing: '훈제 연어, 스모크 치즈',
+        steps: ['재료를 쉐이킹한 뒤 얼음이 담긴 잔에 따르고 피트 위스키를 살짝 띄웁니다.']
+      },
+      {
+        id: 'gin-tonic',
+        name: '진 토닉',
+        engName: 'Gin & Tonic',
+        abv: 12,
+        icon: '🍸',
+        desc: '가장 청량하고 깔끔하게 즐길 수 있는 롱드링크 칵테일입니다.',
+        ingredients: ['진', '토닉워터', '레몬 즙'],
+        measures: ['진 45ml', '토닉워터 120ml', '레몬 슬라이스'],
+        taste: { sweet: 2, sour: 3, bitter: 3, strong: 2, refreshing: 5 },
+        flavorDesc: '보타니컬 진의 향과 탄산의 청량감.',
+        pairing: '가벼운 스낵, 감자칩',
+        steps: ['얼음이 가득 찬 하이볼 글라스에 진과 토닉워터를 넣고 가볍게 젓습니다.']
+      }
+    ];
+
+    let selectedIngredients = JSON.parse(localStorage.getItem('my_bar_selected')) || ['버번 위스키', '스카치 위스키', '토닉워터', '레몬 즙'];
+    let customRecipes = JSON.parse(localStorage.getItem('my_bar_custom_recipes')) || [];
+    let currentIngCategory = 'all';
+    let currentMatchFilter = 'all';
+    let tasteChartInstance = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderIngredientList();
+      renderRecipes();
+    });
+
+    function filterIngCategory(cat) {
+      currentIngCategory = cat;
+      document.querySelectorAll('.ing-tab').forEach(tab => {
+        tab.className = 'ing-tab py-1.5 rounded text-slate-400 hover:text-white transition';
+      });
+      event.target.className = 'ing-tab py-1.5 rounded text-slate-300 transition font-medium active-tab bg-dark-700 text-amber-gold';
+      renderIngredientList();
+    }
+
+    function renderIngredientList() {
+      const container = document.getElementById('ingredient-list');
+      container.innerHTML = '';
+      const filtered = defaultIngredients.filter(i => currentIngCategory === 'all' || i.category === currentIngCategory);
+
+      filtered.forEach(ing => {
+        const isChecked = selectedIngredients.includes(ing.name);
+        const item = document.createElement('label');
+        item.className = `flex items-center justify-between p-2.5 rounded border transition cursor-pointer text-xs select-none ${
+          isChecked ? 'bg-dark-800 border-amber-gold/40 text-amber-gold font-medium' : 'bg-dark-950 border-dark-700/60 text-slate-400 hover:border-dark-600'
+        }`;
+        item.innerHTML = `
+          <span class="flex items-center gap-2">
+            <input type="checkbox" value="${ing.name}" ${isChecked ? 'checked' : ''} onchange="toggleIngredient('${ing.name}')" class="rounded bg-dark-950 border-dark-700 text-amber-gold focus:ring-0">
+            ${ing.name}
+          </span>
+          <span class="text-[10px] text-slate-500 uppercase font-mono">${ing.category}</span>
+        `;
+        container.appendChild(item);
+      });
+      document.getElementById('selected-count').innerText = `${selectedIngredients.length}개`;
+    }
+
+    function toggleIngredient(name) {
+      if (selectedIngredients.includes(name)) {
+        selectedIngredients = selectedIngredients.filter(i => i !== name);
+      } else {
+        selectedIngredients.push(name);
+      }
+      localStorage.setItem('my_bar_selected', JSON.stringify(selectedIngredients));
+      renderIngredientList();
+      renderRecipes();
+    }
+
+    function clearIngredients() {
+      selectedIngredients = [];
+      localStorage.setItem('my_bar_selected', JSON.stringify(selectedIngredients));
+      renderIngredientList();
+      renderRecipes();
+    }
+
+    function selectAllIngredients() {
+      selectedIngredients = defaultIngredients.map(i => i.name);
+      localStorage.setItem('my_bar_selected', JSON.stringify(selectedIngredients));
+      renderIngredientList();
+      renderRecipes();
+    }
+
+    function setMatchFilter(mode) {
+      currentMatchFilter = mode;
+      const allBtn = document.getElementById('filter-all-btn');
+      const possBtn = document.getElementById('filter-possible-btn');
+      if (mode === 'all') {
+        allBtn.className = "flex-1 sm:flex-none text-xs px-3 py-1.5 rounded transition font-medium bg-amber-gold text-dark-950 font-semibold";
+        possBtn.className = "flex-1 sm:flex-none text-xs px-3 py-1.5 rounded transition text-slate-400 hover:text-slate-200";
+      } else {
+        possBtn.className = "flex-1 sm:flex-none text-xs px-3 py-1.5 rounded transition font-medium bg-amber-gold text-dark-950 font-semibold";
+        allBtn.className = "flex-1 sm:flex-none text-xs px-3 py-1.5 rounded transition text-slate-400 hover:text-slate-200";
+      }
+      renderRecipes();
+    }
+
+    function renderRecipes() {
+      const grid = document.getElementById('recipe-grid');
+      const searchKeyword = document.getElementById('search-input').value.trim().toLowerCase();
+      grid.innerHTML = '';
+      const allRecipes = [...defaultRecipes, ...customRecipes];
+
+      const filtered = allRecipes.filter(recipe => {
+        const matchesSearch = recipe.name.toLowerCase().includes(searchKeyword) || recipe.engName.toLowerCase().includes(searchKeyword);
+        const missing = recipe.ingredients.filter(ing => !selectedIngredients.includes(ing));
+        const canMake = missing.length === 0;
+        if (currentMatchFilter === 'possible' && !canMake) return false;
+        return matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="col-span-full py-16 text-center text-slate-500 text-xs font-mono">조건에 일치하는 레시피가 없습니다.</div>`;
+        return;
+      }
+
+      filtered.forEach(recipe => {
+        const missing = recipe.ingredients.filter(ing => !selectedIngredients.includes(ing));
+        const canMake = missing.length === 0;
+        const card = document.createElement('div');
+        card.className = `bg-dark-900/80 border ${canMake ? 'border-amber-gold/40' : 'border-dark-700/60'} rounded-xl p-5 hover:border-amber-gold/80 transition cursor-pointer flex flex-col justify-between group`;
+        card.onclick = () => openDetailModal(recipe);
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <span class="text-2xl p-2 bg-dark-950 rounded border border-dark-700">${recipe.icon}</span>
+                <div>
+                  <h3 class="font-bold text-sm text-slate-100 group-hover:text-amber-gold transition font-cinzel">${recipe.name}</h3>
+                  <p class="text-[11px] text-slate-400 font-mono">${recipe.engName}</p>
+                </div>
+              </div>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded border ${canMake ? 'bg-amber-gold/10 text-amber-gold border-amber-gold/30 font-semibold' : 'bg-dark-800 text-slate-400 border-dark-700'}">
+                ${canMake ? '제작 가능 🍸' : `부족 ${missing.length}개`}
+              </span>
+            </div>
+            <p class="text-xs text-slate-300 line-clamp-2 mb-4 leading-relaxed">${recipe.desc}</p>
+            <div class="flex flex-wrap gap-1 mb-4">
+              ${recipe.ingredients.map(ing => `<span class="text-[10px] font-mono px-2 py-0.5 rounded ${selectedIngredients.includes(ing) ? 'bg-dark-800 text-slate-300 border border-dark-700' : 'bg-rose-500/10 text-rose-300 border border-rose-500/20'}">${ing}</span>`).join('')}
+            </div>
+          </div>
+          <div class="pt-3 border-t border-dark-700/60 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+            <span>ABV: <strong class="text-slate-200">${recipe.abv}%</strong></span>
+            <span class="text-amber-gold group-hover:translate-x-1 transition-transform">View Recipe →</span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function openDetailModal(recipe) {
+      document.getElementById('modal-icon').innerText = recipe.icon;
+      document.getElementById('modal-title').innerText = recipe.name;
+      document.getElementById('modal-eng-title').innerText = recipe.engName;
+      document.getElementById('modal-abv').innerText = `${recipe.abv}% ABV`;
+      document.getElementById('modal-desc').innerText = recipe.desc;
+      document.getElementById('modal-flavor-desc').innerText = recipe.flavorDesc || '균형 잡힌 클래식 풍미';
+      document.getElementById('modal-pairing').innerText = recipe.pairing || '기본 스낵 및 치즈';
+
+      const ingUl = document.getElementById('modal-ingredients');
+      ingUl.innerHTML = '';
+      recipe.measures.forEach(m => {
+        ingUl.innerHTML += `<li class="bg-dark-950 p-2 rounded border border-dark-700/60 text-slate-200 font-mono">${m}</li>`;
+      });
+
+      const stepOl = document.getElementById('modal-steps');
+      stepOl.innerHTML = '';
+      recipe.steps.forEach(s => {
+        stepOl.innerHTML += `<li>${s}</li>`;
+      });
+
+      renderTasteChart(recipe.taste);
+      document.getElementById('detail-modal').classList.remove('hidden');
+    }
+
+    function closeDetailModal() { document.getElementById('detail-modal').classList.add('hidden'); }
+
+    function renderTasteChart(t) {
+      const ctx = document.getElementById('tasteChart').getContext('2d');
+      if (tasteChartInstance) tasteChartInstance.destroy();
+      tasteChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['단맛', '신맛', '쓴맛', '도수감', '청량감'],
+          datasets: [{
+            data: [t.sweet, t.sour, t.bitter, t.strong, t.refreshing],
+            backgroundColor: 'rgba(212, 175, 55, 0.15)',
+            borderColor: '#D4AF37',
+            borderWidth: 1.5,
+            pointBackgroundColor: '#D4AF37'
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: {
+            r: {
+              min: 0, max: 5,
+              ticks: { display: false },
+              grid: { color: 'rgba(255, 255, 255, 0.08)' },
+              angleLines: { color: 'rgba(255, 255, 255, 0.08)' },
+              pointLabels: { color: '#94A3B8', font: { size: 10, family: 'Noto Sans KR' } }
+            }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function openAddModal() { document.getElementById('add-modal').classList.remove('hidden'); }
+    function closeAddModal() { document.getElementById('add-modal').classList.add('hidden'); }
+
+    function handleAddRecipe(e) {
+      e.preventDefault();
+      const newRecipe = {
+        id: 'custom-' + Date.now(),
+        name: document.getElementById('add-name').value.trim(),
+        engName: document.getElementById('add-eng-name').value.trim(),
+        abv: parseInt(document.getElementById('add-abv').value) || 0,
+        icon: document.getElementById('add-icon').value.trim() || '🥃',
+        desc: document.getElementById('add-desc').value.trim() || '커스텀 레시피',
+        ingredients: document.getElementById('add-ing-list').value.split(',').map(s => s.trim()).filter(Boolean),
+        measures: document.getElementById('add-ing-list').value.split(',').map(s => `${s.trim()} 적당량`),
+        taste: { sweet: 3, sour: 3, bitter: 3, strong: 3, refreshing: 3 },
+        steps: document.getElementById('add-steps').value.split('\n').map(s => s.trim()).filter(Boolean)
+      };
+      customRecipes.push(newRecipe);
+      localStorage.setItem('my_bar_custom_recipes', JSON.stringify(customRecipes));
+      closeAddModal();
+      document.getElementById('add-recipe-form').reset();
+      renderRecipes();
+    }
+  </script>
+</body>
+</html>
